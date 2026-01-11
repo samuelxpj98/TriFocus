@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid'; // Simplified UUID generation usually needs a lib, but I'll use a helper below to avoid deps issues in this prompt format
 import { Task, JobType, Priority, Effort, ViewMode } from './types';
 import { Icons, JOB_COLORS, PRIORITY_MAP, EFFORT_MAP } from './constants';
 import TaskItem from './components/TaskItem';
@@ -59,9 +58,6 @@ const App: React.FC = () => {
       ? tasks 
       : tasks.filter(t => t.job === viewMode);
 
-    // Filter out completed for the main list (could be a toggle, but keeping it simple)
-    // We actually keep completed at the bottom usually, let's just sort them.
-    
     return filtered.sort((a, b) => {
       // 1. Completion status (Active first)
       if (a.completed !== b.completed) return a.completed ? 1 : -1;
@@ -85,144 +81,147 @@ const App: React.FC = () => {
 
   // --- Render ---
   return (
-    <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="flex justify-center min-h-screen bg-slate-200">
       
-      {/* Mobile-first Navigation (Sidebar on Desktop) */}
-      <aside className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-200 md:relative md:border-t-0 md:border-r md:w-64 md:flex-col md:justify-start md:h-screen flex justify-around p-2 md:p-6 shadow-lg md:shadow-none">
+      {/* Mobile Container Frame */}
+      <div className="w-full max-w-md bg-slate-50 min-h-screen flex flex-col relative shadow-2xl overflow-hidden">
         
-        <div className="hidden md:block mb-8">
-           <h1 className="text-2xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
-             TriFocus.
-           </h1>
-           <p className="text-xs text-slate-400 mt-1">Organize. Prioritize. Execute.</p>
-        </div>
-
-        <nav className="flex md:flex-col gap-1 w-full md:space-y-2">
-           <button 
-             onClick={() => setViewMode('DASHBOARD')}
-             className={`flex flex-col md:flex-row items-center md:gap-3 p-2 md:px-4 md:py-3 rounded-xl transition-all ${viewMode === 'DASHBOARD' ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
-           >
-             <Icons.LayoutDashboard className="w-6 h-6 md:w-5 md:h-5" />
-             <span className="text-[10px] md:text-sm font-medium mt-1 md:mt-0">Geral</span>
-           </button>
-
-           <div className="hidden md:block border-t border-slate-100 my-2"></div>
-           <p className="hidden md:block text-xs font-bold text-slate-400 uppercase tracking-wider px-4 mb-2">Contextos</p>
-
-           <button 
-             onClick={() => setViewMode(JobType.SOMOSUM)}
-             className={`flex flex-col md:flex-row items-center md:gap-3 p-2 md:px-4 md:py-3 rounded-xl transition-all ${viewMode === JobType.SOMOSUM ? 'bg-indigo-100 text-indigo-700 font-semibold' : 'text-slate-500 hover:bg-indigo-50 hover:text-indigo-600'}`}
-           >
-             <Icons.Users className="w-6 h-6 md:w-5 md:h-5" />
-             <span className="text-[10px] md:text-sm mt-1 md:mt-0">SomosUm</span>
-           </button>
-
-           <button 
-             onClick={() => setViewMode(JobType.VIBETEEN)}
-             className={`flex flex-col md:flex-row items-center md:gap-3 p-2 md:px-4 md:py-3 rounded-xl transition-all ${viewMode === JobType.VIBETEEN ? 'bg-orange-100 text-orange-700 font-semibold' : 'text-slate-500 hover:bg-orange-50 hover:text-orange-600'}`}
-           >
-             <Icons.Briefcase className="w-6 h-6 md:w-5 md:h-5" />
-             <span className="text-[10px] md:text-sm mt-1 md:mt-0">Vibe Teen</span>
-           </button>
-
-           <button 
-             onClick={() => setViewMode(JobType.IPE)}
-             className={`flex flex-col md:flex-row items-center md:gap-3 p-2 md:px-4 md:py-3 rounded-xl transition-all ${viewMode === JobType.IPE ? 'bg-sky-100 text-sky-700 font-semibold' : 'text-slate-500 hover:bg-sky-50 hover:text-sky-600'}`}
-           >
-             <Icons.BookOpen className="w-6 h-6 md:w-5 md:h-5" />
-             <span className="text-[10px] md:text-sm mt-1 md:mt-0">IPE</span>
-           </button>
-        </nav>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8 overflow-y-auto max-h-screen">
-        <header className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-2xl font-bold text-slate-800">
-              {viewMode === 'DASHBOARD' ? 'Visão Geral Inteligente' : `Tarefas: ${viewMode}`}
-            </h2>
-            <p className="text-sm text-slate-500 mt-1">
-              {viewMode === 'DASHBOARD' 
-                ? `Você tem ${activeTasksCount} tarefas ativas organizadas por urgência e facilidade.` 
-                : 'Foque neste contexto agora.'}
-            </p>
-          </div>
-          <button 
-            onClick={() => setIsModalOpen(true)}
-            className="bg-slate-900 hover:bg-slate-700 text-white p-3 md:px-5 md:py-2.5 rounded-full md:rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2 group"
-          >
-            <Icons.Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-            <span className="hidden md:inline font-medium">Nova Tarefa</span>
-          </button>
+        {/* Header */}
+        <header className="px-5 py-6 bg-white border-b border-slate-100 sticky top-0 z-10 shadow-sm flex justify-between items-center">
+            <div>
+                <h1 className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">
+                    TriFocus.
+                </h1>
+                <p className="text-xs text-slate-500 font-medium">
+                    {viewMode === 'DASHBOARD' ? 'Visão Geral' : viewMode}
+                </p>
+            </div>
+             <button 
+                onClick={() => setIsModalOpen(true)}
+                className="bg-slate-900 hover:bg-slate-800 text-white w-10 h-10 rounded-full flex items-center justify-center shadow-md active:scale-90 transition-transform"
+              >
+                <Icons.Plus className="w-5 h-5" />
+              </button>
         </header>
 
-        {/* AI Insight Section */}
-        {viewMode === 'DASHBOARD' && (
-          <div className="mb-8">
-            <div className="bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
-               {/* Background decoration */}
-               <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
-               
-               <div className="relative z-10">
-                 <div className="flex justify-between items-start">
-                    <div>
-                        <h3 className="text-lg font-bold flex items-center gap-2">
-                           <Icons.Brain className="w-5 h-5" />
-                           TriFocus Coach
-                        </h3>
-                        <p className="text-indigo-100 text-sm mt-1 max-w-xl">
-                           Precisa de ajuda para organizar a mente entre os 3 trabalhos? Eu analiso suas tarefas e crio um roteiro.
-                        </p>
+        {/* Scrollable Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 pb-28">
+           {/* AI Banner */}
+           {viewMode === 'DASHBOARD' && (
+            <div className="mb-6">
+                <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+                    <div className="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-white opacity-10 rounded-full blur-2xl"></div>
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-center mb-3">
+                            <h3 className="text-sm font-bold flex items-center gap-2">
+                            <Icons.Brain className="w-4 h-4" />
+                            Coach IA
+                            </h3>
+                            <button 
+                                onClick={handleGetAdvice}
+                                disabled={isLoadingAi}
+                                className="bg-white/20 active:bg-white/30 text-xs px-3 py-1.5 rounded-lg font-medium transition-colors backdrop-blur-md"
+                            >
+                                {isLoadingAi ? '...' : 'Gerar Plano'}
+                            </button>
+                        </div>
+                        {aiAdvice ? (
+                            <div className="bg-black/20 rounded-xl p-3 text-xs leading-relaxed border border-white/10 animate-fade-in whitespace-pre-line max-h-40 overflow-y-auto">
+                                {aiAdvice}
+                            </div>
+                        ) : (
+                             <p className="text-indigo-100 text-xs">
+                                Toque para organizar sua rotina de hoje.
+                            </p>
+                        )}
                     </div>
-                    <button 
-                       onClick={handleGetAdvice}
-                       disabled={isLoadingAi}
-                       className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-medium transition-all border border-white/20 disabled:opacity-50"
-                    >
-                       {isLoadingAi ? 'Analisando...' : 'Gerar Plano do Dia'}
-                    </button>
-                 </div>
-                 
-                 {aiAdvice && (
-                     <div className="mt-4 bg-black/20 backdrop-blur-sm rounded-xl p-4 text-sm leading-relaxed border border-white/10 animate-fade-in whitespace-pre-line">
-                         {aiAdvice}
-                     </div>
-                 )}
-               </div>
+                </div>
             </div>
-          </div>
-        )}
+           )}
 
-        {/* Task List */}
-        <div className="space-y-4 max-w-3xl">
-          {sortedTasks.length === 0 ? (
-            <div className="text-center py-20 opacity-50">
-               <div className="inline-block p-4 rounded-full bg-slate-100 mb-4">
-                  <Icons.CheckCircle className="w-8 h-8 text-slate-400" />
-               </div>
-               <p className="text-lg font-medium text-slate-600">Tudo limpo por aqui!</p>
-               <p className="text-sm">Adicione tarefas para organizar sua rotina.</p>
+           {/* Stats / Info */}
+           <div className="flex items-center justify-between mb-4 px-1">
+                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    {viewMode === 'DASHBOARD' ? 'Sua Lista' : 'Contexto'}
+                </span>
+                <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-bold">
+                    {activeTasksCount} Pendentes
+                </span>
+           </div>
+
+           {/* Task List */}
+            <div className="space-y-3">
+            {sortedTasks.length === 0 ? (
+                <div className="text-center py-16 opacity-50 flex flex-col items-center">
+                    <div className="p-4 rounded-full bg-slate-100 mb-3">
+                        <Icons.CheckCircle className="w-8 h-8 text-slate-400" />
+                    </div>
+                    <p className="text-base font-medium text-slate-600">Lista Vazia</p>
+                    <p className="text-xs text-slate-400 mt-1">Hora de descansar ou planejar.</p>
+                </div>
+            ) : (
+                sortedTasks.map(task => (
+                <TaskItem 
+                    key={task.id} 
+                    task={task} 
+                    onToggle={toggleTask} 
+                    onDelete={deleteTask} 
+                />
+                ))
+            )}
             </div>
-          ) : (
-            sortedTasks.map(task => (
-              <TaskItem 
-                key={task.id} 
-                task={task} 
-                onToggle={toggleTask} 
-                onDelete={deleteTask} 
-              />
-            ))
-          )}
-        </div>
-      </main>
+        </main>
 
-      <AddTaskModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onAdd={addTask}
-        defaultJob={viewMode !== 'DASHBOARD' ? viewMode : undefined}
-      />
+        {/* Fixed Bottom Navigation */}
+        <nav className="fixed bottom-0 w-full max-w-md bg-white border-t border-slate-200 flex justify-around items-center px-2 py-2 pb-6 z-20 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
+            <button 
+                onClick={() => setViewMode('DASHBOARD')}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${viewMode === 'DASHBOARD' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-600'}`}
+            >
+                <div className={`p-1 rounded-full ${viewMode === 'DASHBOARD' ? 'bg-slate-100' : ''}`}>
+                   <Icons.LayoutDashboard className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-medium">Geral</span>
+            </button>
+
+            <button 
+                onClick={() => setViewMode(JobType.SOMOSUM)}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${viewMode === JobType.SOMOSUM ? 'text-indigo-600' : 'text-slate-400 hover:text-indigo-600'}`}
+            >
+                <div className={`p-1 rounded-full ${viewMode === JobType.SOMOSUM ? 'bg-indigo-50' : ''}`}>
+                    <Icons.Users className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-medium">SomosUm</span>
+            </button>
+
+            <button 
+                onClick={() => setViewMode(JobType.VIBETEEN)}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${viewMode === JobType.VIBETEEN ? 'text-orange-600' : 'text-slate-400 hover:text-orange-600'}`}
+            >
+                <div className={`p-1 rounded-full ${viewMode === JobType.VIBETEEN ? 'bg-orange-50' : ''}`}>
+                    <Icons.Briefcase className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-medium">Vibe</span>
+            </button>
+
+            <button 
+                onClick={() => setViewMode(JobType.IPE)}
+                className={`flex flex-col items-center gap-1 p-2 rounded-xl w-16 transition-all ${viewMode === JobType.IPE ? 'text-sky-600' : 'text-slate-400 hover:text-sky-600'}`}
+            >
+                 <div className={`p-1 rounded-full ${viewMode === JobType.IPE ? 'bg-sky-50' : ''}`}>
+                    <Icons.BookOpen className="w-6 h-6" />
+                </div>
+                <span className="text-[10px] font-medium">IPE</span>
+            </button>
+        </nav>
+
+        <AddTaskModal 
+            isOpen={isModalOpen} 
+            onClose={() => setIsModalOpen(false)} 
+            onAdd={addTask}
+            defaultJob={viewMode !== 'DASHBOARD' ? viewMode : undefined}
+        />
+      </div>
     </div>
   );
 };

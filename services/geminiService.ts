@@ -1,13 +1,12 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { Task, JobType, Priority, Effort } from "../types";
 
-const apiKey = process.env.API_KEY || '';
-const ai = new GoogleGenAI({ apiKey });
+// In Vite, process.env is polyfilled by our config, but we ensure fallback
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const getPrioritizationAdvice = async (tasks: Task[]): Promise<string> => {
-  if (!apiKey) return "API Key not configured.";
+  if (!process.env.API_KEY) return "API Key not configured. Verifique o Cloudflare ou .env";
   
-  // Filter only pending tasks to reduce token usage and noise
   const pendingTasks = tasks.filter(t => !t.completed);
 
   if (pendingTasks.length === 0) {
@@ -56,12 +55,11 @@ export const getPrioritizationAdvice = async (tasks: Task[]): Promise<string> =>
 };
 
 export const breakdownTask = async (taskTitle: string, job: JobType): Promise<string[]> => {
-    if (!apiKey) return ["API Key missing"];
+    if (!process.env.API_KEY) return ["API Key missing"];
 
     const prompt = `
       Eu tenho uma tarefa complexa para meu trabalho no ${job}: "${taskTitle}".
       Quebre esta tarefa em 3 a 5 sub-tarefas menores e acionáveis para que eu possa começar facilmente.
-      Retorne APENAS uma lista JSON de strings, ex: ["Passo 1", "Passo 2"]. Sem markdown extra.
     `;
 
     try {
@@ -69,7 +67,13 @@ export const breakdownTask = async (taskTitle: string, job: JobType): Promise<st
             model: 'gemini-3-flash-preview',
             contents: prompt,
             config: {
-                responseMimeType: "application/json"
+                responseMimeType: "application/json",
+                responseSchema: {
+                  type: Type.ARRAY,
+                  items: {
+                    type: Type.STRING
+                  }
+                }
             }
         });
         
