@@ -11,8 +11,13 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const App: React.FC = () => {
   // --- State ---
   const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem('trifocus_tasks');
-    return saved ? JSON.parse(saved) : [];
+    try {
+      const saved = localStorage.getItem('trifocus_tasks');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      console.error("Erro ao carregar tarefas:", e);
+      return [];
+    }
   });
   
   const [viewMode, setViewMode] = useState<ViewMode>('DASHBOARD');

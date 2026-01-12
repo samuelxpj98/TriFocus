@@ -1,11 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Task, JobType, Priority, Effort } from "../types";
 
-// In Vite, process.env is polyfilled by our config, but we ensure fallback
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// In Vite, process.env is polyfilled by our config.
+// We lazily initialize to prevent top-level crashes if the key is missing.
+const getAIClient = () => {
+  if (!process.env.API_KEY) {
+    return null;
+  }
+  return new GoogleGenAI({ apiKey: process.env.API_KEY });
+};
 
 export const getPrioritizationAdvice = async (tasks: Task[]): Promise<string> => {
-  if (!process.env.API_KEY) return "API Key not configured. Verifique o Cloudflare ou .env";
+  const ai = getAIClient();
+  if (!ai) return "API Key not configured. Verifique o Cloudflare ou .env";
   
   const pendingTasks = tasks.filter(t => !t.completed);
 
@@ -55,7 +62,8 @@ export const getPrioritizationAdvice = async (tasks: Task[]): Promise<string> =>
 };
 
 export const breakdownTask = async (taskTitle: string, job: JobType): Promise<string[]> => {
-    if (!process.env.API_KEY) return ["API Key missing"];
+    const ai = getAIClient();
+    if (!ai) return ["API Key missing"];
 
     const prompt = `
       Eu tenho uma tarefa complexa para meu trabalho no ${job}: "${taskTitle}".
